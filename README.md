@@ -1,2 +1,2 @@
 # Quake_parser
-Leitura e armazenamento das principais informações de arquivo game.log
+Leitura e armazenamento das principais informações do arquivo game.log
