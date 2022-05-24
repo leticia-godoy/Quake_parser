@@ -1,0 +1,2 @@
+module Quake_Parser {
+}
