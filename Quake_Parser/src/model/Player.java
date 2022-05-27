@@ -34,11 +34,14 @@ public class Player {
 		this.all_kills = all_kills;
 	}
 
-
 	public Player(int id, String name) {
 		super();
 		this.id = id;
 		this.name = name;
+	}
+	
+	public String printPlayerDetails() {
+		return "Player ID : " + this.id + "/n" + "Player's name : " + this.name+ "/n" + "Player's kills in each game: " + this.game_kills+"/n";		
 	}
 	
 

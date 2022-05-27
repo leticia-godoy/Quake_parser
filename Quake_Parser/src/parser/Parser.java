@@ -11,37 +11,48 @@ import model.Player;
 
 public class Parser {
 
+	LinkedList <Game> games = new LinkedList<>();
 
 	public Parser(String file) throws IOException{
-		
-		try {
-			FileInputStream fstream = new FileInputStream(file);
-			BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
-			String strLine;
 			
-			int roll = 0;
-			int kills_total = 0;
-			LinkedList <Game> games = new LinkedList<>();
-
+		FileInputStream fstream = new FileInputStream(file);
+		BufferedReader br = new BufferedReader(new InputStreamReader(fstream));
+		
+		String strLine;		
+		int roll = 0;
+		int kills_total = 0;
+					
+		try {
+			
+			
 			// leitura de todas as linhas do doc
 			while ((strLine = br.readLine()) != null) {
-				if (strLine.contains("InitGame:")) {
-					roll++;
-					Game newGame = new Game(roll);
-					if (strLine.contains("ClientConnect:")) {
-						clientConnected(strLine, newGame);
-					}
-					if (strLine.contains("ClientUserinfoChanged:")) {
-						clientNameChanged(strLine, newGame);
-					}
-					if (strLine.contains("Kill:")) {
-						kills_total++;
-						gameKill(strLine, kills_total, newGame);
-					}
-				}//quando jogo acabar, add na lista de jogos principal (games)
 				
-			}
-			fstream.close();
+				if (strLine.contains("InitGame:")) {
+					roll = +1;
+					Game newGame = new Game(roll);
+					kills_total = 0;
+					games.add(newGame);
+					
+					while(!strLine.contains("ShutdownGame:")){
+						
+						if (strLine.contains("ClientUserinfoChanged:")) {
+							clientNameChanged(strLine, newGame);
+						
+						}						
+						else if (strLine.contains("Kill:")) {
+							kills_total++;
+							newGame.setKills_total(kills_total);
+							gameKill(strLine, kills_total, newGame);
+						
+						}
+
+					}
+				
+				
+				}										
+			}fstream.close();								
+			
 		} catch (IOException e) {
 			System.err.println("Error: " + e.getMessage());
 			e.printStackTrace();
@@ -49,23 +60,8 @@ public class Parser {
 		}
 		
 	}
-
-	public void clientConnected(String line, Game game) {
-		// recupera o dígito após ": "
-		String regex = "(:\\s)(\\d)"; // matcher.group(2) == id do player
-
-		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(line);
-
-		if (matcher.find()) {
-			int newId = parseInt(matcher.group(2));
-			Player player = new Player(newId, null);
-			if(!game.getPlayers().equals(player)){
-				game.getPlayers().add(player);
-			}
-		}
-	}
-
+		
+	//criação de jogadores para adição na lista do jogo atual
 	public void clientNameChanged(String line, Game game) {
 		// recupera tudo entre o "n/" e o "\t"
 		String regexName = "(n\\\\)(.*?)(\\\\t)"; // matcher.group(2) == nome player
@@ -79,15 +75,20 @@ public class Parser {
 		Matcher matcherId = patternId.matcher(line);
 
 		if (matcher.find() && matcherId.find()) {
-			int newId = parseInt(matcher.group(2));
+			int newId = parseInt(matcherId.group(1));
 			String newName = matcher.group(2);
-			Player player = new Player(newId, newName);
-			if(!game.getPlayers().equals(player)){
-				game.getPlayers().add(player);
-			}
 			
-		}
-
+			//Quando o jogador já existe
+			//procurar e não encontrar id na lista == null
+			if(game.searchPlayer(newId) != null){
+				game.getPlayers().get(newId).setName(newName);
+			}else{
+				Player newP = new Player(newId, newName);
+				game.getPlayers().add(newP);
+			}				
+		    
+		}	
+			
 	}
 
 	public void gameKill(String line,Integer kills_total, Game game) {
@@ -101,28 +102,26 @@ public class Parser {
 		if (matcherK.find()) {
 			int idKiller = parseInt(matcherK.group(2));
 			int idVictim = parseInt(matcherK.group(3));
-			int idDeath = parseInt(matcherK.group(4));
-
+			//int idDeath = parseInt(matcherK.group(4));
+			
+			//Quando a morte não envolve outro jogador = -1kill da vítima			
 			if (idKiller == 1022) {
-				for(Player aux : game.getPlayers()){
-					if(aux.getId().equals(idVictim)){
-						// -1 kill para a vítima do mundo
-						int kills = aux.getGame_kills();
-						aux.setGame_kills(kills-1);
-					}
+				if(game.searchPlayer(idVictim) != null){
+					// -1 kill para a vítima do mundo
+					int kills = game.getPlayers().get(idVictim).getGame_kills();
+					game.getPlayers().get(idVictim).setGame_kills(kills-1);
 				}
-			}else{
-				for(Player aux : game.getPlayers()){
-					if(aux.getId().equals(idKiller)){
-						// -1 kill para a vítima do mundo
-						int kills = aux.getGame_kills()+1;
-						aux.setGame_kills(kills);
-						aux.getAll_kills().add(kills);
-					}
+			}else{				
+				if(game.searchPlayer(idKiller) != null){					
+					int kills = game.getPlayers().get(idKiller).getGame_kills();
+					game.getPlayers().get(idKiller).setGame_kills(kills+1);
 				}
 			}
 			
 		}
 
-	}
+	}	
+	public LinkedList<Game> getAllGames() {
+		return games;
+	}	
 }

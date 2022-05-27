@@ -21,7 +21,7 @@ public class Game {
 	}
 
 	public void setKills_total(int kills_total) {
-		Kills_total = kills_total;
+		this.Kills_total = kills_total;
 	}
 
 	public LinkedList<Player> getPlayers() {
@@ -34,6 +34,20 @@ public class Game {
 	public Game(int roll) {
 		super();
 		this.roll = roll;
+	}
+		
+	public Player searchPlayer(Integer id){
+		for(Player p : this.players){
+			if(p.getId().equals(id)){
+				return p;
+			}
+		}
+		return null;
+	}
+	
+
+	public String printGameDetails() {
+		return "Game Number : " + this.roll + "\n" + "Total kills : " + this.Kills_total + "\n" + "Players : " + this.players;
 	}
 
 }
